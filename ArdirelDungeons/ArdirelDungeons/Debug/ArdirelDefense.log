@@ -1,0 +1,11 @@
+﻿Build started 7/2/2015 5:50:43 PM.
+     1>Project "C:\Users\Carter Blalack\Documents\GitHub\ArdirelDungeons\ArdirelDefense\ArdirelDefense\ArdirelDefense.vcxproj" on node 2 (ClCompile target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt GameWorld.cpp
+         Skipping... (no relevant changes detected)
+         GameWorld.cpp
+     1>Done Building Project "C:\Users\Carter Blalack\Documents\GitHub\ArdirelDungeons\ArdirelDefense\ArdirelDefense\ArdirelDefense.vcxproj" (ClCompile target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:00.13

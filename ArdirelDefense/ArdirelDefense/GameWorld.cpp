@@ -425,13 +425,36 @@ void GameWorld::makeEn(int lev)
 	enemies[j-1]->visible = false;
 	enemies[j-1]->alive = true;
 	enemies[j-1]->tile = loc;
-	enemies[j-1]->loadTex("daemonblooded.png");
-	enemies[j-1]->type = 'e';
-	enemies[j-1]->health = (lev + 3)*(lev + 3) - 10; 
-	enemies[j-1]->maxHealth = (lev + 3)*(lev + 3) - 10; 
-	enemies[j-1]->init = 5;
-	enemies[j-1]->level = lev;
-	enemies[j-1]->atk = (lev*lev/2)+(5*lev/2);
+	if(loc%3 == 0)
+	{
+		enemies[j-1]->loadTex("daemonblooded.png");
+		enemies[j-1]->type = 'e';
+		enemies[j-1]->health = (lev + 3)*(lev + 3) - 10; 
+		enemies[j-1]->maxHealth = (lev + 3)*(lev + 3) - 10; 
+		enemies[j-1]->init = 5;
+		enemies[j-1]->level = lev;
+		enemies[j-1]->atk = (lev*lev/2)+(5*lev/2);
+	}
+	else if(loc%3 == 1) 
+	{
+		enemies[j-1]->loadTex("darkone.png");
+		enemies[j-1]->type = 'e';
+		enemies[j-1]->health = (lev + 3)*(lev + 3) - 10; 
+		enemies[j-1]->maxHealth = (lev + 3)*(lev + 3) - 10; 
+		enemies[j-1]->init = 5;
+		enemies[j-1]->level = lev;
+		enemies[j-1]->atk = ((lev*lev/2)+(5*lev/2))*1.5;
+	}
+	else 
+	{
+		enemies[j-1]->loadTex("ninja.png");
+		enemies[j-1]->type = 'e';
+		enemies[j-1]->health = ((lev + 3)*(lev + 3) - 10)*0.8; 
+		enemies[j-1]->maxHealth = ((lev + 3)*(lev + 3) - 10)*0.8; 
+		enemies[j-1]->init = 15;
+		enemies[j-1]->level = lev;
+		enemies[j-1]->atk = ((lev*lev/2)+(5*lev/2))*0.9;
+	}
 	
 	eIndex = j-1;
 
