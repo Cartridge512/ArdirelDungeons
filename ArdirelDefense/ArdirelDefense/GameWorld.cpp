@@ -113,7 +113,7 @@ void GameWorld::draw()
 			gameObjectPtrCollection[i]-> draw();
 		}
 	}
-
+	cout<<playerPtr->maxHealth<<endl;
 	int e = enemies.size();
 	for (int i = 0; i < e; i++)
 	{
@@ -123,7 +123,7 @@ void GameWorld::draw()
 	int d = display.size();
 	for (int i = 0; i < d; i++)
 	{
-		display[i]-> draw();
+		if(display[i]->visible){display[i]->draw();}
 	}
 
 
@@ -493,7 +493,9 @@ void GameWorld::combat(GameObject* player, GameObject* enemy)
 			setHealth(playerPtr, gameObjectPtrCollection[playerIndex+1]);
 			if(player->health <= 0)
 			{
-				//delete player;
+				for(int i = 0; i < gameObjectPtrCollection.size(); i++) {gameObjectPtrCollection[i]->visible = false;}
+				for(int j = 0; j < enemies.size(); j++) {enemies[j]->visible = false;}
+				for(int k = 0; k < display.size(); k++) {display[k]->visible = false;}
 			}
 		}
 		else
@@ -531,16 +533,18 @@ void GameWorld::combat(GameObject* player, GameObject* enemy)
 				if(lev > player->level)
 				{
 					setPStats(player->atk + 5, 18, 23);
-					player->maxHealth += 10;
+					player->maxHealth += 10; if(player->maxHealth >= 99){player->maxHealth = 99;}
 					player->health = player->maxHealth;
 					setHealth(player, gameObjectPtrCollection[playerIndex+1]);
+					setLevel(lev, gameObjectPtrCollection[playerIndex+2]);
 				}
-				setLevel(lev, gameObjectPtrCollection[playerIndex+2]);
 			}
 		}
 		else
 		{
-			//delete player;
+			for(int i = 0; i < gameObjectPtrCollection.size(); i++) {gameObjectPtrCollection[i]->visible = false;}
+			for(int j = 0; j < enemies.size(); j++) {enemies[j]->visible = false;}
+			for(int k = 0; k < display.size(); k++) {display[k]->visible = false;}
 		}
 	}
 }
@@ -685,6 +689,8 @@ void GameWorld::makeDisplay()
 	display[j-1]->loadTex("Numbers/1.png");
 
 	setPStats(playerPtr->atk, 10, 23);
+
+	for(int k = 0; k < display.size(); k++) {display[k]->visible = true;}
 }
 
 void GameWorld::checkVis()
@@ -753,7 +759,7 @@ void GameWorld::setPStats(int a, int mc, int mt)
 		case 7:	display[14]->loadTex("Numbers/7.png"); break;
 		case 8:	display[14]->loadTex("Numbers/8.png"); break;
 		case 9:	display[14]->loadTex("Numbers/9.png"); break;
-		case 0: display[14]->loadTex("Numbers/blank.png"); break;
+		case 0: display[14]->loadTex("Numbers/0.png"); break;
 		default:	display[14]->loadTex("Numbers/blank.png"); break;
 	}
 
