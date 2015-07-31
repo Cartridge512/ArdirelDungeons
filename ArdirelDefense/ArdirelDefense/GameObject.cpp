@@ -82,16 +82,6 @@ void GameObject::draw()
 					numVerts		);
 }
 
-void GameObject::setTex(int texNum)
-{
-	texture = textures[texNum];
-	std::cout<<texture<<std::endl;
-	if( 0 == texture )
-	{
-		printf( "SOIL loading error: '%s'\n", SOIL_last_result() );
-	}
-}
-
 void GameObject::loadTex(char* file)
 {
 	texture = SOIL_load_OGL_texture
@@ -119,7 +109,6 @@ int GameObject::nlCalc()
 	else if(exp >= 15){lev = 3;}
 	else if(exp >= 5){lev = 2;}
 	else{lev = 1;}
-	cout<<exp<<endl;
 	return lev;
 }
 

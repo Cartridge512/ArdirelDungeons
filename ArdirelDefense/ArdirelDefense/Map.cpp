@@ -26,11 +26,9 @@ void Map::genLevel()
 	for (int e = 0; e < 600; e++) {map[e] = 'w';}
 	map[601] = '\0';
 	int rCount = randomize(10, 12);
-	//cout<<rCount<<endl;
 	for (int r = 0; r < rCount; r++)
 	{
 		genRoom();
-		//cout<<rooms[r].x << " " << rooms[r].y << " " << rooms[r].width << " " << rooms[r].height<<endl;
 	}
 
 	for (int c = 0; c < rooms.size(); c++)
@@ -40,10 +38,8 @@ void Map::genLevel()
 		{
 			rtcIndex = randomize(0, rooms.size()-1);
 		}
-		//cout<<c<<endl;
 		connect(rooms[c], rooms[rtcIndex]);
 	}
-	//connect(rooms[0], rooms[1]);
 
 	ofstream outMap;
 	outMap.open("Maps/map.txt");
@@ -75,7 +71,6 @@ void Map::genRoom()
 			for (int b = y; b < y+height; b++)
 			{
 				map[(a)*20 + (b)] = 'f';
-				//cout<<(a)*20 + (b)<<endl;
 			}
 		}
 	}

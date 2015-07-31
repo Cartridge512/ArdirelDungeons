@@ -8,16 +8,19 @@ vector<GameObject*> GameWorld::gameObjectPtrCollection = vector<GameObject*>(0);
 vector<GameObject*> display = vector<GameObject*>(0);
 vector<GameObject*> enemies = vector<GameObject*>(0);
 GameObject* GameWorld::playerPtr = nullptr;
-bool GameWorld::ballIH = true;
-bool GameWorld::shooting = false;
-bool GameWorld::atRest = true;
-GLuint GameWorld::tex1 = 0;
 GLFWwindow* GameWorld::window = nullptr;
+GameObject* GOscreen = nullptr;
+GameObject* CSscreen = nullptr;
+GameObject* YWscreen = nullptr;
+GameObject* bossPtr = nullptr;
 int playerIndex, eIndex;
-int prevW, prevA, prevS, prevD, prevSp, prevEnt;
+int prevW, prevA, prevS, prevD;
 char* map;
 int l = 20;
 int r = 440;
+bool GO = false;
+bool YW = false;
+bool CS = true;
 
 int const numTriangles = 2;
 GLsizei const numVerts = numTriangles * 3;
@@ -68,36 +71,63 @@ bool GameWorld::init(GLFWwindow* windowPtr)
 	makeDisplay();
 	setHealth(playerPtr, gameObjectPtrCollection[playerIndex+1]);
 	
+	GLfloat fullVerts[] = {
+		-1.0f, -1.0f,	0.0f, 0.0f, -1.0f,
+		-1.0f, 1.0f,		0.0f, 1.0f, -1.0f,
+		1.0f, -1.0f,		1.0f, 0.0f, -1.0f,
 
-	//int xoff = -playerPtr->position.x;
-	//int yoff = -playerPtr->position.y;
-	//int set = gameObjectPtrCollection.size();
-	//for (int i = 0; i < set; i++)
-	//{
-	//	if (i != playerIndex && i != playerPtr->hIndex && i != playerPtr->lIndex)
-	//	{
-	//		gameObjectPtrCollection[i]->position.x -= xoff;
-	//		gameObjectPtrCollection[i]->position.y -= yoff;
-	//	}
-	//	else
-	//	{
-	//		gameObjectPtrCollection[i]->position.x = 0;
-	//		gameObjectPtrCollection[i]->position.y = 0;
-	//	}
-	//}
+		1.0f, 1.0f,		1.0f, 1.0f, -1.0f,
+		1.0, -1.0f,		1.0f, 0.0f, -1.0f,
+		-1.0, 1.0f,		0.0f, 1.0f, -1.0f
+	};
+
+	GOscreen = new GameObject(fullVerts, numVerts, shaderProgramIndex);
+	GOscreen->position = vec3(0, 0, 0);
+	GOscreen->loadTex("gameover.png");
+	GOscreen->visible = false;
+
+	YWscreen = new GameObject(fullVerts, numVerts, shaderProgramIndex);
+	YWscreen->position = vec3(0, 0, 0);
+	YWscreen->loadTex("youwin.png");
+	YWscreen->visible = false;
+
+	CSscreen = new GameObject(fullVerts, numVerts, shaderProgramIndex);
+	CSscreen->position = vec3(0, 0, 0);
+	CSscreen->loadTex("charselect.png");
+	CSscreen->visible = true;
+	playerPtr->loadTex("soldier.png");
 
 	return true;
 }
 
 void GameWorld::update()
 {
-	float dt = getFrameTime();
-
-	//std::cout<<gameObjectPtrCollection[1]->position.x << " " << gameObjectPtrCollection[1]->position.y<<endl;
+	if(CS){charSel();}
 
 	checkMove();
 	
 	checkVis();
+
+	if((GO || YW) && GLFW_PRESS == glfwGetKey(window, GLFW_KEY_SPACE))
+	{
+		vector<GameObject*>().swap(gameObjectPtrCollection);
+		vector<GameObject*>().swap(enemies);
+		vector<GameObject*>().swap(display);
+		init(window);
+		GO = false;
+		YW = false;
+		GOscreen->visible = false;
+		YWscreen->visible = false;
+		for(int i = 0; i < 600; i++)
+		{
+			gameObjectPtrCollection[i]->visible = false;
+		}
+		for(int j = 0; j < enemies.size(); j++)
+		{
+			enemies[j]->visible = false;
+		}
+		CS = true;
+	}
 }
 
 void GameWorld::draw()
@@ -113,7 +143,7 @@ void GameWorld::draw()
 			gameObjectPtrCollection[i]-> draw();
 		}
 	}
-	cout<<playerPtr->maxHealth<<endl;
+	
 	int e = enemies.size();
 	for (int i = 0; i < e; i++)
 	{
@@ -126,7 +156,20 @@ void GameWorld::draw()
 		if(display[i]->visible){display[i]->draw();}
 	}
 
+	if(GO)
+	{
+		GOscreen->draw();
+	}
 
+	if(CS)
+	{
+		CSscreen->draw();
+	}
+
+	if(YW)
+	{
+		YWscreen->draw();
+	}
 	
 	glFlush();
 }
@@ -137,8 +180,6 @@ void GameWorld::checkMove()
 	int aPress = glfwGetKey(window, GLFW_KEY_A);
 	int sPress = glfwGetKey(window, GLFW_KEY_S);
 	int dPress = glfwGetKey(window, GLFW_KEY_D);
-	int spPress = glfwGetKey(window, GLFW_KEY_SPACE);
-	int entPress = glfwGetKey(window, GLFW_KEY_ENTER);
 	int set = gameObjectPtrCollection.size();
 	int enem = enemies.size();
 	float ldif = 1+playerPtr->position.x; 
@@ -200,7 +241,6 @@ void GameWorld::checkMove()
 					}
 				
 					l-=20;
-					//cout<<l<<endl;
 					playerPtr->tile -= 20;
 				}
 				else
@@ -281,27 +321,72 @@ void GameWorld::checkMove()
 			}
 		}
 	}
-	//if (spPress == GLFW_RELEASE && prevSp == GLFW_PRESS)
-	//{
-	//	playerPtr->health--;
-	//	setHealth(playerPtr, gameObjectPtrCollection[playerPtr->hIndex]);
-	//	float dec = (float)playerPtr->health/playerPtr->maxHealth;
-	//	display[1]->objscale = vec3(dec, 1, 1);
-	//	display[1]->position = vec3(0.6f + (dec*0.16666667f), 0.3f, 0);
-	//	cout<<display[1]->position.x<<endl;
-	//}
-	//if (entPress == GLFW_RELEASE && prevEnt == GLFW_PRESS)
-	//{
-	//	setLevel(playerPtr->level + 1, gameObjectPtrCollection[playerPtr->lIndex]);
-	//	playerPtr->level++;
-	//}
 
 	prevW = wPress;
 	prevA = aPress;
 	prevS = sPress;
 	prevD = dPress;
-	prevSp = spPress;
-	prevEnt = entPress;
+}
+
+void GameWorld::charSel(void)
+{
+	int onePress = glfwGetKey(window, GLFW_KEY_1); //all the inputs
+	int twoPress = glfwGetKey(window, GLFW_KEY_2);
+	int threePress = glfwGetKey(window, GLFW_KEY_3);
+	int fourPress = glfwGetKey(window, GLFW_KEY_4);
+
+	if(onePress)
+	{
+		CS = false;
+		playerPtr->loadTex("soldier.png");
+		display[3]->loadTex("soldier.png");
+		playerPtr->spec = 's';
+		playerPtr->health = 21;
+		playerPtr->maxHealth = 21;
+		playerPtr->atk = 10;
+		playerPtr->init = 4;
+		setPStats(playerPtr->atk, 18, 23);
+		setHealth(playerPtr, gameObjectPtrCollection[playerIndex+1]);
+	}
+	if(twoPress)
+	{
+		CS = false;
+		playerPtr->loadTex("brawler.png");
+		display[3]->loadTex("brawler.png");
+		playerPtr->spec = 'b';
+		playerPtr->health = 18;
+		playerPtr->maxHealth = 18;
+		playerPtr->atk = 7;
+		playerPtr->init = 10;
+		setPStats(playerPtr->atk, 18, 23);
+		setHealth(playerPtr, gameObjectPtrCollection[playerIndex+1]);
+	}
+	if(threePress)
+	{
+		CS = false;
+		playerPtr->loadTex("acolyte.png");
+		display[3]->loadTex("acolyte.png");
+		playerPtr->spec = 'a';
+		playerPtr->health = 15;
+		playerPtr->maxHealth = 15;
+		playerPtr->atk = 13;
+		playerPtr->init = 7;
+		setPStats(playerPtr->atk, 18, 23);
+		setHealth(playerPtr, gameObjectPtrCollection[playerIndex+1]);
+	}
+	if(fourPress)
+	{
+		CS = false;
+		playerPtr->loadTex("priest.png");
+		display[3]->loadTex("priest.png");
+		playerPtr->spec = 'p';
+		playerPtr->health = 18;
+		playerPtr->maxHealth = 18;
+		playerPtr->atk = 10;
+		playerPtr->init = 7;
+		setPStats(playerPtr->atk, 18, 23);
+		setHealth(playerPtr, gameObjectPtrCollection[playerIndex+1]);
+	}
 }
 
 GameWorld::GameWorld(void)
@@ -337,14 +422,13 @@ void GameWorld::makePC()
 	while (gameObjectPtrCollection[loc]->type != 'f')
 	{
 		loc = rand()%240;
-		cout<<gameObjectPtrCollection[loc]->type<<endl;
 	}
 
 	gameObjectPtrCollection[j-1]->position = vec3(((int)loc/20) * 0.0666666f - 0.9666666f, loc%20 * 0.1 - 0.95, 0);
 	gameObjectPtrCollection[j-1]->visible = true;
 	gameObjectPtrCollection[j-1]->tile = loc;
 	playerIndex = j-1;
-	gameObjectPtrCollection[j-1]->loadTex("player1.png");
+	gameObjectPtrCollection[j-1]->loadTex("soldier.png");
 	gameObjectPtrCollection[j-1]->type = 'p';
 	gameObjectPtrCollection[j-1]->health = 18;
 	gameObjectPtrCollection[j-1]->maxHealth = 18;
@@ -374,7 +458,14 @@ void GameWorld::makePC()
 void GameWorld::makeBG()
 {
 	map = loadTextFile("Maps/map.txt");
-	int floors = 0;
+	int style = rand()%3;
+	char* fstyle = "floor1.png";
+	char* wstyle = "wall1.png"; 
+	switch(style){
+		case 0: fstyle = "floor1.png"; wstyle = "wall1.png"; break;
+		case 1: fstyle = "floor2.png"; wstyle = "wall2.png"; break;
+		case 2: fstyle = "floor3.png"; wstyle = "wall3.png"; break;
+	}
 	for(int a = 0; a < 30; a++)
 	{
 		for(int b = 0; b < 20; b++)
@@ -387,13 +478,10 @@ void GameWorld::makeBG()
 			gameObjectPtrCollection[j-1]->visible = false;
 			gameObjectPtrCollection[j-1]->tile = (a)*20 + (b);
 
-			if (map[(a)*20 + (b)]=='f'){gameObjectPtrCollection[j-1]->type='f'; gameObjectPtrCollection[j-1]->loadTex("floor1.png"); floors++;}
-			else if (map[(a)*20 + (b)]=='w'){gameObjectPtrCollection[j-1]->type='w'; gameObjectPtrCollection[j-1]->loadTex("wall1.png");}
-
-			//std::cout<<(a)*20 + (b+1)<<endl;
+			if (map[(a)*20 + (b)]=='f'){gameObjectPtrCollection[j-1]->type='f'; gameObjectPtrCollection[j-1]->loadTex(fstyle); }
+			else if (map[(a)*20 + (b)]=='w'){gameObjectPtrCollection[j-1]->type='w'; gameObjectPtrCollection[j-1]->loadTex(wstyle);}
 		}
 	}
-	cout<<floors<<endl;
 }
 
 void GameWorld::popEn()
@@ -425,13 +513,36 @@ void GameWorld::makeEn(int lev)
 	enemies[j-1]->visible = false;
 	enemies[j-1]->alive = true;
 	enemies[j-1]->tile = loc;
-	enemies[j-1]->loadTex("daemonblooded.png");
-	enemies[j-1]->type = 'e';
-	enemies[j-1]->health = (lev + 3)*(lev + 3) - 10; 
-	enemies[j-1]->maxHealth = (lev + 3)*(lev + 3) - 10; 
-	enemies[j-1]->init = 5;
-	enemies[j-1]->level = lev;
-	enemies[j-1]->atk = (lev*lev/2)+(5*lev/2);
+	if(loc%3 == 0)
+	{
+		enemies[j-1]->loadTex("lich.png");
+		enemies[j-1]->type = 'e';
+		enemies[j-1]->health = (lev + 3)*(lev + 3) - 10; 
+		enemies[j-1]->maxHealth = (lev + 3)*(lev + 3) - 10; 
+		enemies[j-1]->init = 7;
+		enemies[j-1]->level = lev;
+		enemies[j-1]->atk = (lev*lev/2)+(5*lev/2);
+	}
+	else if(loc%3 == 1) 
+	{
+		enemies[j-1]->loadTex("darkone.png");
+		enemies[j-1]->type = 'e';
+		enemies[j-1]->health = (lev + 3)*(lev + 3) - 10; 
+		enemies[j-1]->maxHealth = (lev + 3)*(lev + 3) - 10; 
+		enemies[j-1]->init = 5;
+		enemies[j-1]->level = lev;
+		enemies[j-1]->atk = ((lev*lev/2)+(5*lev/2))*1.25;
+	}
+	else 
+	{
+		enemies[j-1]->loadTex("daemonblooded.png");
+		enemies[j-1]->type = 'e';
+		enemies[j-1]->health = ((lev + 3)*(lev + 3) - 10)*0.8; 
+		enemies[j-1]->maxHealth = ((lev + 3)*(lev + 3) - 10)*0.8; 
+		enemies[j-1]->init = 15;
+		enemies[j-1]->level = lev;
+		enemies[j-1]->atk = ((lev*lev/2)+(5*lev/2))*1.1;
+	}
 	
 	eIndex = j-1;
 
@@ -452,6 +563,8 @@ void GameWorld::makeEn(int lev)
 	enemies[j-1]->lIndex = j+1;
 	enemies[j+1]->type = 'i';
 	setLevel(lev, enemies[j+1]);
+
+	if(lev == 10){bossPtr = enemies[j-1]; enemies[j-1]->visible = true;}
 }
 
 int GameWorld::findEnLoc()
@@ -475,13 +588,9 @@ int GameWorld::findEnLoc()
 void GameWorld::combat(GameObject* player, GameObject* enemy)
 {
 	int pInit = randomize(1, player->init); 
-	//cout<<pInit<<endl;
 	int eInit = randomize(1, enemy->init);
-	//cout<<eInit<<endl;
 	int pD = randomize(0, player->atk);
-	//cout<<pD<<endl;
 	int eD = randomize(0, enemy->atk);
-	//cout<<eD<<endl;
 
 	if(pInit > eInit)
 	{
@@ -493,6 +602,7 @@ void GameWorld::combat(GameObject* player, GameObject* enemy)
 			setHealth(playerPtr, gameObjectPtrCollection[playerIndex+1]);
 			if(player->health <= 0)
 			{
+				GO = true;
 				for(int i = 0; i < gameObjectPtrCollection.size(); i++) {gameObjectPtrCollection[i]->visible = false;}
 				for(int j = 0; j < enemies.size(); j++) {enemies[j]->visible = false;}
 				for(int k = 0; k < display.size(); k++) {display[k]->visible = false;}
@@ -500,6 +610,7 @@ void GameWorld::combat(GameObject* player, GameObject* enemy)
 		}
 		else
 		{
+			if (enemy == bossPtr){YW = true;}
 			enemies[enemy->lIndex]->visible = false; enemies[enemy->lIndex]->alive = false;
 			enemies[enemy->hIndex]->visible = false; enemies[enemy->hIndex]->alive = false;
 			enemies[enemy->hIndex-1]->visible = false;enemies[enemy->hIndex-1]->alive = false;
@@ -507,10 +618,24 @@ void GameWorld::combat(GameObject* player, GameObject* enemy)
 			int lev = player->nlCalc();
 			if(lev > player->level)
 			{
-				setPStats(player->atk + 5, 18, 23);
-				player->maxHealth += 10;
+				int atkPlus = (5*(lev-player->level));
+				player->maxHealth += 10 * (lev-player->level);
+				player->level = lev;
+				setPStats(player->atk + atkPlus, 18, 23);
 				player->health = player->maxHealth;
 				setHealth(player, gameObjectPtrCollection[playerIndex+1]);
+				if(playerPtr->spec == 's' && lev >= 7) {display[3]->loadTex("crusader.png");}
+				else if(playerPtr->spec == 's' && lev >= 4) {display[3]->loadTex("knight.png");}
+				else if(playerPtr->spec == 's' && lev >= 1) {display[3]->loadTex("soldier.png");}
+				else if(playerPtr->spec == 'b' && lev >= 7) {display[3]->loadTex("gladiator.png");}
+				else if(playerPtr->spec == 'b' && lev >= 4) {display[3]->loadTex("pitfighter.png");}
+				else if(playerPtr->spec == 'b' && lev >= 1) {display[3]->loadTex("brawler.png");}
+				else if(playerPtr->spec == 'a' && lev >= 7) {display[3]->loadTex("archmage.png");}
+				else if(playerPtr->spec == 'a' && lev >= 4) {display[3]->loadTex("sorcerer.png");}
+				else if(playerPtr->spec == 'a' && lev >= 1) {display[3]->loadTex("acolyte.png");}
+				else if(playerPtr->spec == 'p' && lev >= 7) {display[3]->loadTex("templar.png");}
+				else if(playerPtr->spec == 'p' && lev >= 4) {display[3]->loadTex("zealot.png");}
+				else if(playerPtr->spec == 'p' && lev >= 1) {display[3]->loadTex("priest.png");}
 			}
 			setLevel(lev, gameObjectPtrCollection[playerIndex+2]);
 		}
@@ -525,23 +650,41 @@ void GameWorld::combat(GameObject* player, GameObject* enemy)
 			setHealth(enemies[enemy->hIndex-1], enemies[enemy->hIndex]);
 			if(enemy->health <= 0)
 			{
+				if (enemy == bossPtr){YW = true;}
 				enemies[enemy->lIndex]->visible = false; enemies[enemy->lIndex]->alive = false;
 				enemies[enemy->hIndex]->visible = false; enemies[enemy->hIndex]->alive = false;
 				enemies[enemy->hIndex-1]->visible = false;enemies[enemy->hIndex-1]->alive = false;
-				player->exp+=enemy->level; if(enemy->level > player->level){player->exp += (enemy->level - player->level)*(enemy->level - player->level + 1);}
+				player->exp+=enemy->level; 
+				if(enemy->level > player->level){player->exp += (enemy->level - player->level)*(enemy->level - player->level + 1);}
 				int lev = player->nlCalc();
 				if(lev > player->level)
 				{
-					setPStats(player->atk + 5, 18, 23);
-					player->maxHealth += 10; if(player->maxHealth >= 99){player->maxHealth = 99;}
+					int atkPlus = (5*(lev-player->level));
+					player->maxHealth += 10 * (lev-player->level); 
+					player->level = lev;
+					setPStats(player->atk + atkPlus, 18, 23);
+					if(player->maxHealth >= 99){player->maxHealth = 99;}
 					player->health = player->maxHealth;
 					setHealth(player, gameObjectPtrCollection[playerIndex+1]);
 					setLevel(lev, gameObjectPtrCollection[playerIndex+2]);
+					if(playerPtr->spec == 's' && lev >= 7) {display[3]->loadTex("crusader.png");}
+					else if(playerPtr->spec == 's' && lev >= 4) {display[3]->loadTex("knight.png");}
+					else if(playerPtr->spec == 's' && lev >= 1) {display[3]->loadTex("soldier.png");}
+					else if(playerPtr->spec == 'b' && lev >= 7) {display[3]->loadTex("gladiator.png");}
+					else if(playerPtr->spec == 'b' && lev >= 4) {display[3]->loadTex("pitfighter.png");}
+					else if(playerPtr->spec == 'b' && lev >= 1) {display[3]->loadTex("brawler.png");}
+					else if(playerPtr->spec == 'a' && lev >= 7) {display[3]->loadTex("archmage.png");}
+					else if(playerPtr->spec == 'a' && lev >= 4) {display[3]->loadTex("sorcerer.png");}
+					else if(playerPtr->spec == 'a' && lev >= 1) {display[3]->loadTex("acolyte.png");}
+					else if(playerPtr->spec == 'p' && lev >= 7) {display[3]->loadTex("templar.png");}
+					else if(playerPtr->spec == 'p' && lev >= 4) {display[3]->loadTex("zealot.png");}
+					else if(playerPtr->spec == 'p' && lev >= 1) {display[3]->loadTex("priest.png");}
 				}
 			}
 		}
 		else
 		{
+			GO = true;
 			for(int i = 0; i < gameObjectPtrCollection.size(); i++) {gameObjectPtrCollection[i]->visible = false;}
 			for(int j = 0; j < enemies.size(); j++) {enemies[j]->visible = false;}
 			for(int k = 0; k < display.size(); k++) {display[k]->visible = false;}
@@ -604,7 +747,7 @@ void GameWorld::makeDisplay()
 	j = display.size();
 	//3 - picon
 	display[j-1]->position = vec3(0.73333333f, 0.7f, 0);
-	display[j-1]->loadTex("player1.png");
+	display[j-1]->loadTex("soldier.png");
 
 	GLfloat numberVerts[] = {
 		-0.0111111f, -0.025f,	0.0f, 0.0f, -1.0f,
@@ -691,6 +834,8 @@ void GameWorld::makeDisplay()
 	setPStats(playerPtr->atk, 10, 23);
 
 	for(int k = 0; k < display.size(); k++) {display[k]->visible = true;}
+
+	
 }
 
 void GameWorld::checkVis()
@@ -734,6 +879,7 @@ void GameWorld::enVis(GameObject* tile)
 
 void GameWorld::setPStats(int a, int mc, int mt)
 {
+	if(a > 99){a = 99;}
 	playerPtr->atk = a;
 	int ten = (int)a/10;
 	switch(ten) {
@@ -746,7 +892,7 @@ void GameWorld::setPStats(int a, int mc, int mt)
 		case 7:	display[15]->loadTex("Numbers/7.png"); break;
 		case 8:	display[15]->loadTex("Numbers/8.png"); break;
 		case 9:	display[15]->loadTex("Numbers/9.png"); break;
-		case 0: display[15]->loadTex("Numbers/blank.png"); break;
+		case 0: display[15]->loadTex("Numbers/0.png"); break;
 		default:	display[15]->loadTex("Numbers/blank.png"); break;
 	}
 	switch(a%10) {
@@ -769,7 +915,6 @@ void GameWorld::setPStats(int a, int mc, int mt)
 void GameWorld::setHealth(GameObject* cPtr, GameObject* iPtr)
 {
 	float cH = cPtr->health / (float)cPtr->maxHealth;
-	//cout << cH << endl;
 	if(cH > 0.857114f){iPtr->loadTex("hfull.png");}
 	else if(cH > 0.714285f){iPtr->loadTex("h6.png");}
 	else if(cH > 0.571428f){iPtr->loadTex("h5.png");}
@@ -843,17 +988,17 @@ void GameWorld::setHealth(GameObject* cPtr, GameObject* iPtr)
 void GameWorld::setLevel(int lvl, GameObject* ptr)
 {
 	switch(lvl) {
-		case 1: ptr->loadTex("l1.png"); break;
-		case 2:	ptr->loadTex("l2.png"); break;
-		case 3:	ptr->loadTex("l3.png"); break;
-		case 4:	ptr->loadTex("l4.png"); break;
-		case 5:	ptr->loadTex("l5.png"); break;
-		case 6:	ptr->loadTex("l6.png"); break;
-		case 7:	ptr->loadTex("l7.png"); break;
-		case 8:	ptr->loadTex("l8.png"); break;
-		case 9:	ptr->loadTex("l9.png"); break;
-		case 10: ptr->loadTex("lboss.png"); break;
-		default:	ptr->loadTex("l1.png"); break;
+		case 1: ptr->loadTex("l1.png");     if(playerPtr->spec=='s'){playerPtr->loadTex("soldier.png"); } if(playerPtr->spec=='b'){playerPtr->loadTex("brawler.png"); }     if(playerPtr->spec=='a'){playerPtr->loadTex("acolyte.png"); }   if(playerPtr->spec=='p'){playerPtr->loadTex("priest.png"); } break;
+		case 2:	ptr->loadTex("l2.png");     if(playerPtr->spec=='s'){playerPtr->loadTex("soldier.png"); } if(playerPtr->spec=='b'){playerPtr->loadTex("brawler.png"); }     if(playerPtr->spec=='a'){playerPtr->loadTex("acolyte.png"); }   if(playerPtr->spec=='p'){playerPtr->loadTex("priest.png"); } break;
+		case 3:	ptr->loadTex("l3.png");     if(playerPtr->spec=='s'){playerPtr->loadTex("soldier.png"); } if(playerPtr->spec=='b'){playerPtr->loadTex("brawler.png"); }     if(playerPtr->spec=='a'){playerPtr->loadTex("acolyte.png"); }   if(playerPtr->spec=='p'){playerPtr->loadTex("priest.png"); } break;
+		case 4:	ptr->loadTex("l4.png");     if(playerPtr->spec=='s'){playerPtr->loadTex("knight.png");  } if(playerPtr->spec=='b'){playerPtr->loadTex("pitfighter.png");  } if(playerPtr->spec=='a'){playerPtr->loadTex("sorcerer.png");  } if(playerPtr->spec=='p'){playerPtr->loadTex("zealot.png");  } break;
+		case 5:	ptr->loadTex("l5.png");     if(playerPtr->spec=='s'){playerPtr->loadTex("knight.png");  } if(playerPtr->spec=='b'){playerPtr->loadTex("pitfighter.png");  } if(playerPtr->spec=='a'){playerPtr->loadTex("sorcerer.png");  } if(playerPtr->spec=='p'){playerPtr->loadTex("zealot.png");  } break;
+		case 6:	ptr->loadTex("l6.png");     if(playerPtr->spec=='s'){playerPtr->loadTex("knight.png");  } if(playerPtr->spec=='b'){playerPtr->loadTex("pitfighter.png");  } if(playerPtr->spec=='a'){playerPtr->loadTex("sorcerer.png");  } if(playerPtr->spec=='p'){playerPtr->loadTex("zealot.png");  } break;
+		case 7:	ptr->loadTex("l7.png");     if(playerPtr->spec=='s'){playerPtr->loadTex("crusader.png");} if(playerPtr->spec=='b'){playerPtr->loadTex("gladiator.png");}    if(playerPtr->spec=='a'){playerPtr->loadTex("archmage.png");}   if(playerPtr->spec=='p'){playerPtr->loadTex("templar.png");} break;
+		case 8:	ptr->loadTex("l8.png");     if(playerPtr->spec=='s'){playerPtr->loadTex("crusader.png");} if(playerPtr->spec=='b'){playerPtr->loadTex("gladiator.png");}    if(playerPtr->spec=='a'){playerPtr->loadTex("archmage.png");}   if(playerPtr->spec=='p'){playerPtr->loadTex("templar.png");} break;
+		case 9:	ptr->loadTex("l9.png");     if(playerPtr->spec=='s'){playerPtr->loadTex("crusader.png");} if(playerPtr->spec=='b'){playerPtr->loadTex("gladiator.png");}    if(playerPtr->spec=='a'){playerPtr->loadTex("archmage.png");}   if(playerPtr->spec=='p'){playerPtr->loadTex("templar.png");} break;
+		case 10: ptr->loadTex("lboss.png"); if(playerPtr->spec=='s'){playerPtr->loadTex("crusader.png");} if(playerPtr->spec=='b'){playerPtr->loadTex("gladiator.png");}    if(playerPtr->spec=='a'){playerPtr->loadTex("archmage.png");}   if(playerPtr->spec=='p'){playerPtr->loadTex("templar.png");} break;
+		default:	ptr->loadTex("l1.png"); if(playerPtr->spec=='s'){playerPtr->loadTex("soldier.png"); } if(playerPtr->spec=='b'){playerPtr->loadTex("brawler.png"); }     if(playerPtr->spec=='a'){playerPtr->loadTex("acolyte.png"); }   if(playerPtr->spec=='p'){playerPtr->loadTex("priest.png"); } break;
 	}
 }
 

@@ -24,16 +24,12 @@ public:
 	vec3 objscale;
 	vec3 rotationAxis;
 	float rotationAngle;
-	vec3 force;
 	vec3 color;
 	bool visible, alive;
 	GLuint texture;
 	bool textured;
-	void setTex(int texnum);
-	vector<char*> files;
-	vector<GLuint> textures;
 	void loadTex(char* file);
-	char type;
+	char type, spec;
 	int health, maxHealth, level, exp;
 	int nlCalc();
 	int atk, init;
